@@ -19,6 +19,14 @@ app.use(
 
 app.use("/public", express.static(process.cwd() + "/public"));
 
-app.get("/", function (req, res) {
+app.get("/", (req, res) => {
   res.sendFile(process.cwd() + "/views/index.html");
+});
+
+app.post("/api/exercise/new-user", (req, res) => {});
+
+app.post("/api/exercise/log/:userId/:from?/:to?/:limit?", (req, res) => {});
+
+app.listen(port, () => {
+  console.log("Node.js listening on port " + port);
 });
