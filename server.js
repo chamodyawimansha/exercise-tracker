@@ -18,10 +18,7 @@ const ExerciseSchema = new mongoose.Schema({
   userId: String,
   description: String,
   duration: String,
-  date: {
-    type: Date,
-    required: false,
-  },
+  date: Date,
 });
 
 mongoose.connect(process.env.DATABASE_URL, {
@@ -105,7 +102,7 @@ app.post("/api/exercise/add", (req, res) => {
         userId: userId,
         description: description,
         duration: duration,
-        date: date,
+        date: date !== "" ? date : new Date(),
       });
 
       newExercise.save((error) => {
@@ -116,7 +113,7 @@ app.post("/api/exercise/add", (req, res) => {
             userId: newExercise.userId,
             description: newExercise.description,
             duration: newExercise.duration,
-            date: newExercise.date,
+            date: new Date(newExercise.date).toISOString().substring(0, 10),
           });
         }
       });
