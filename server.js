@@ -3,6 +3,7 @@ var cors = require("cors");
 var bodyParser = require("body-parser");
 require("dotenv").config();
 const mongoose = require("mongoose");
+const { Decimal128 } = require("mongodb");
 
 var app = express();
 
@@ -17,7 +18,10 @@ const ExerciseSchema = new mongoose.Schema({
   userId: String,
   description: String,
   duration: String,
-  date: Date,
+  date: {
+    type: Date,
+    required: false,
+  },
 });
 
 mongoose.connect(process.env.DATABASE_URL, {
@@ -28,7 +32,7 @@ mongoose.connect(process.env.DATABASE_URL, {
 const db = mongoose.connection;
 
 db.on("error", () => {
-  return res.json({ error: "Database Error" });
+  return console.log("Database Error");
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -56,15 +60,68 @@ app.post("/api/exercise/new-user", (req, res) => {
     return res.json({ error: "username is required" });
   }
 
-  let newUser = new User({
-    username: username,
-  });
-
-  newUser.save((error) => {
-    if (error) {
-      return res.json({ error: "Database Error" });
+  User.findOne({ username: username }, (err, result) => {
+    if (err) return res.json({ error: "Database Error" });
+    if (result) {
+      return res.json({
+        error: "The username " + username + " is already registred",
+      });
     } else {
-      return res.json({ username: newUser.username, _id: newUser.id });
+      let newUser = new User({
+        username: username,
+      });
+
+      newUser.save((error) => {
+        if (error) {
+          return res.json({ error: "Database Error" });
+        } else {
+          return res.json({
+            username: newUser.username,
+            _id: newUser.id,
+          });
+        }
+      });
+    }
+  });
+});
+
+app.post("/api/exercise/add", (req, res) => {
+  const { userId, description, duration, date } = req.body;
+
+  if (
+    userId.replace(/ /g, ";") == "" ||
+    description.replace(/ /g, ";") == "" ||
+    duration == ""
+  ) {
+    return res.json({ error: "Please insert required fields" });
+  }
+
+  //find if the user exists
+  User.findOne({ _id: userId }, (err, result) => {
+    if (err) return res.json({ error: "Database Error" });
+    if (result) {
+      //save the exersise here
+      let newExercise = new Exercise({
+        userId: userId,
+        description: description,
+        duration: duration,
+        date: date,
+      });
+
+      newExercise.save((error) => {
+        if (error) {
+          return res.json({ error: "Database Error" });
+        } else {
+          return res.json({
+            userId: newExercise.userId,
+            description: newExercise.description,
+            duration: newExercise.duration,
+            date: newExercise.date,
+          });
+        }
+      });
+    } else {
+      return res.json({ error: "User not registred" });
     }
   });
 });
