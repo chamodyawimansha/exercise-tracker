@@ -3,7 +3,6 @@ var cors = require("cors");
 var bodyParser = require("body-parser");
 require("dotenv").config();
 const mongoose = require("mongoose");
-const { Decimal128 } = require("mongodb");
 const Schema = mongoose.Schema;
 
 var app = express();
@@ -19,7 +18,7 @@ const ExerciseSchema = new Schema({
   userId: String,
   description: String,
   duration: String,
-  date: String,
+  date: { type: Date },
 });
 
 mongoose.connect(process.env.DATABASE_URL, {
@@ -126,34 +125,41 @@ app.post("/api/exercise/add", (req, res) => {
 
 app.get("/api/exercise/log", (req, res) => {
   const { userId, from, to, limit } = req.query;
-  let user;
 
+  const queryObject = { userId: userId };
+
+  const startDate = new Date(from);
+  const endDate = new Date(to);
+
+  if (startDate === null && endDate === null) {
+    queryObject.date = { $gt: new Date(from), $lt: new Date(to) };
+  }
+
+  const query = Exercise.find(queryObject, "description duration date");
+
+  if (!isNaN(limit)) {
+    query.limit(parseInt(limit));
+  }
   // find the user
-  User.findOne({ _id: userId }, (err, result) => {
+  User.findOne({ _id: userId }, (err, userResult) => {
     if (err) return res.json({ error: "Database Error" });
-    if (result) {
-      user = result;
-    } else {
-      return res.json({ error: "user not found" });
-    }
-  });
-
-  const query = Exercise.find({ userId: userId }, "description duration date");
-
-  query.exec((err, result) => {
-    if (err) return res.json({ error: "Database Error" });
-    // Prints "Space Ghost is a talk show host."
-
-    if (result) {
-      return res.json({
-        _id: user.id,
-        username: user.username,
-        count: result.length,
-        log: result.map((item) => ({
-          description: item.description,
-          duration: item.duration,
-          date: item.date,
-        })),
+    if (userResult) {
+      query.exec((err, exerciseResult) => {
+        if (err) return res.json({ error: "Database Error" });
+        if (exerciseResult) {
+          return res.json({
+            _id: userResult._id,
+            username: userResult.username,
+            count: exerciseResult.length,
+            log: exerciseResult.map((item) => ({
+              description: item.description,
+              duration: item.duration,
+              date: new Date(item.date).toISOString().substring(0, 10),
+            })),
+          });
+        } else {
+          return res.json({ error: "exercise data not found" });
+        }
       });
     } else {
       return res.json({ error: "user not found" });
