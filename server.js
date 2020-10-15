@@ -82,6 +82,19 @@ app.post("/api/exercise/new-user", (req, res) => {
   });
 });
 
+// return all users with the same info
+app.get("/api/exercise/users", (req, res) => {
+  User.find({}, function (err, result) {
+    if (err) return res.json({ error: "Database Error" });
+
+    if (result) {
+      return res.json(
+        result.map((item) => ({ username: item.username, _id: item._id }))
+      );
+    }
+  });
+});
+
 app.post("/api/exercise/add", (req, res) => {
   const { userId, description, duration, date } = req.body;
 
