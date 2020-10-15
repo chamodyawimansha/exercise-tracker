@@ -4,21 +4,22 @@ var bodyParser = require("body-parser");
 require("dotenv").config();
 const mongoose = require("mongoose");
 const { Decimal128 } = require("mongodb");
+const Schema = mongoose.Schema;
 
 var app = express();
 
 const port = process.env.PORT;
 app.use(cors());
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new Schema({
   username: String,
 });
 
-const ExerciseSchema = new mongoose.Schema({
+const ExerciseSchema = new Schema({
   userId: String,
   description: String,
   duration: String,
-  date: Date,
+  date: String,
 });
 
 mongoose.connect(process.env.DATABASE_URL, {
@@ -123,7 +124,42 @@ app.post("/api/exercise/add", (req, res) => {
   });
 });
 
-app.post("/api/exercise/log/:userId/:from?/:to?/:limit?", (req, res) => {});
+app.get("/api/exercise/log", (req, res) => {
+  const { userId, from, to, limit } = req.query;
+  let user;
+
+  // find the user
+  User.findOne({ _id: userId }, (err, result) => {
+    if (err) return res.json({ error: "Database Error" });
+    if (result) {
+      user = result;
+    } else {
+      return res.json({ error: "user not found" });
+    }
+  });
+
+  const query = Exercise.find({ userId: userId }, "description duration date");
+
+  query.exec((err, result) => {
+    if (err) return res.json({ error: "Database Error" });
+    // Prints "Space Ghost is a talk show host."
+
+    if (result) {
+      return res.json({
+        _id: user.id,
+        username: user.username,
+        count: result.length,
+        log: result.map((item) => ({
+          description: item.description,
+          duration: item.duration,
+          date: item.date,
+        })),
+      });
+    } else {
+      return res.json({ error: "user not found" });
+    }
+  });
+});
 
 app.listen(port, () => {
   console.log("Node.js listening on port " + port);
