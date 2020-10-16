@@ -169,7 +169,7 @@ app.get("/api/exercise/log", (req, res) => {
             log: exerciseResult.map((item) => ({
               description: item.description,
               duration: item.duration,
-              date: new Date(item.date).toISOString().substring(0, 10),
+              date: new Date(item.date).toDateString(),
             })),
           });
         } else {
