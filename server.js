@@ -123,10 +123,11 @@ app.post("/api/exercise/add", (req, res) => {
           return res.json({ error: "Database Error" });
         } else {
           return res.json({
-            userId: newExercise.userId,
-            description: newExercise.description,
-            duration: newExercise.duration,
+            _id: newExercise.userId,
+            username: newExercise.username,
             date: new Date(newExercise.date).toISOString().substring(0, 10),
+            duration: newExercise.duration,
+            description: newExercise.description,
           });
         }
       });
