@@ -3,6 +3,7 @@ var cors = require("cors");
 var bodyParser = require("body-parser");
 require("dotenv").config();
 const mongoose = require("mongoose");
+const { Int32 } = require("mongodb");
 const Schema = mongoose.Schema;
 
 var app = express();
@@ -17,7 +18,7 @@ const UserSchema = new Schema({
 const ExerciseSchema = new Schema({
   userId: String,
   description: String,
-  duration: String,
+  duration: { type: Number },
   date: { type: Date },
 });
 
@@ -125,7 +126,7 @@ app.post("/api/exercise/add", (req, res) => {
           return res.json({
             _id: newExercise.userId,
             username: result.username,
-            date: new Date(newExercise.date).toISOString().substring(0, 10),
+            date: new Date(newExercise.date).toDateString(),
             duration: newExercise.duration,
             description: newExercise.description,
           });
