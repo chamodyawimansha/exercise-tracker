@@ -124,7 +124,7 @@ app.post("/api/exercise/add", (req, res) => {
         } else {
           return res.json({
             _id: newExercise.userId,
-            username: newExercise.username,
+            username: result.username,
             date: new Date(newExercise.date).toISOString().substring(0, 10),
             duration: newExercise.duration,
             description: newExercise.description,
